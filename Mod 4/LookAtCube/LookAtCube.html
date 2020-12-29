@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+        attribute vec4 vColor;
+        varying vec4 fColor;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        void main()
+        {
+        fColor = vColor;
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+        }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec4 fColor;
+
+        void main()
+        {
+        gl_FragColor = fColor;
+        }
+    </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="LookAtCube.js"></script>
+</head>
+
+<body>
+    <canvas id="gl-canvas" width="512" height="512">
+        Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+    <br />
+    <button id="perspective" style="background: #bebfba">Perspective View</button>
+    <button id="orthographic" style="background: #FFF">Orthographic View</button>
+    <br />
+    Fovy: 60 <input id="fovyval" type="range" min="60" max="160" step="5" value="120" /> 160
+    <br />
+    X Camera Position:
+    <button id="rotateleft" style="background: #FFF">Rotate Left</button>
+    <button id="rotateright" style="background: #FFF">Rotate Right</button>
+    <br />
+    Y Camera Position: -2 <input id="ycameraval" type="range" min="-2.0" max="2.0" step="0.1" value="1.0" /> 2
+</body>
+</html>

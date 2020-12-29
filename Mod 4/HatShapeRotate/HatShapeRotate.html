@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute  vec4 vPosition;
+
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+
+        void main()
+        {
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+        }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        uniform vec4 fColor;
+
+        void main()
+        {
+        gl_FragColor = fColor;
+        }
+    </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="HatShapeRotate.js"></script>
+</head>
+
+<body>
+    <p> </p>
+
+    <canvas id="gl-canvas" width="512" height="512">
+        Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+    <p></p>
+    X Camera Position:
+    <button id="rotateRight">Rotate Right</button>
+    <button id="rotateLeft">Rotate Left</button>
+    <p></p>
+    Y Camera Position:
+    <button id="rotateUp">Rotate Up</button>
+    <button id="rotateDown">Rotate Down</button>
+    <p></p>
+    Type Of Projection:
+    <button id="orthographic">Orthographic</button>
+    <button id="perspective">Perspective</button>
+
+</body>
+</html>
