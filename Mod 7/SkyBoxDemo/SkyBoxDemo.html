@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+
+        attribute  vec4 vPosition;
+
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        varying vec3 fTexCubeCoord;
+        void main()
+        {
+
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+        fTexCubeCoord = normalize(vPosition.xyz);
+        }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+
+        precision mediump float;
+        varying vec3 fTexCubeCoord;
+        uniform samplerCube texMap;
+        void main()
+        {
+        gl_FragColor = textureCube(texMap, fTexCubeCoord);
+        }
+    </script>
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="SkyBoxDemo.js"></script>
+</head>
+
+<body>
+    <canvas id="gl-canvas" width="512" height="512">
+        Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+    <img id="cubefront" src="Images/park_front.jpg" hidden />
+    <img id="cubeback" src="Images/park_back.jpg" hidden />
+    <img id="cubetop" src="Images/park_top.jpg" hidden />
+    <img id="cubebottom" src="Images/park_bottom.jpg" hidden />
+    <img id="cubeleft" src="Images/park_left.jpg" hidden />
+    <img id="cuberight" src="Images/park_right.jpg" hidden />
+</body>
+</html>

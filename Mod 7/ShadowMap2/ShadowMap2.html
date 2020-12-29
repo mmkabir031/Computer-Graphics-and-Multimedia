@@ -1,0 +1,190 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+
+
+    <script id="vertex-shader1" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+
+        uniform mat4 pmvMatrixFromLight;
+
+        void main()
+        {
+        gl_Position = pmvMatrixFromLight * vPosition;
+        }
+    </script>
+
+    <script id="fragment-shader1" type="x-shader/x-fragment">
+        precision mediump float;
+
+        void main() {
+        // Write the z-value in R
+        gl_FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);
+        }
+    </script>
+
+    <script id="vertex-shader2" type="x-shader/x-vertex">
+
+        attribute vec4 vPosition;
+        attribute vec3 vNormal;
+        attribute vec2 vTexCoord;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+
+        uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+        uniform vec4 lightPosition;
+        uniform float shininess;
+
+        varying vec4 fColor;
+        varying vec2 fTexCoord;
+        uniform mat4 pmvMatrixFromLight;
+        varying vec4 fPositionFromLight;
+        varying float normShadowVal;
+
+        void main()
+        {
+        vec3 pos = -(modelViewMatrix * vPosition).xyz;
+
+        //fixed light postion
+        vec3 light = lightPosition.xyz;
+        vec3 L = normalize( light - pos );
+
+        vec3 E = normalize( -pos );
+        vec3 H = normalize( L + E );
+
+        vec4 NN = vec4(vNormal,0);
+
+        // Transform vertex normal into eye coordinates
+
+        vec3 N = normalize( (modelViewMatrix*NN).xyz);
+
+        // Compute terms in the illumination equation
+        vec4 ambient = ambientProduct;
+
+        float Kd = max( dot(L, N), 0.0 );
+        vec4  diffuse = Kd*diffuseProduct;
+
+        float Ks = pow( max(dot(N, H), 0.0), shininess );
+        vec4  specular = Ks * specularProduct;
+
+        if( dot(L, N) < 0.0 ) {
+        specular = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+        fColor = ambient + diffuse + specular;
+        fColor.a = 1.0;
+
+        fPositionFromLight = pmvMatrixFromLight * vPosition;
+        normShadowVal = specular.a;
+
+        fTexCoord = vTexCoord;
+        }
+    </script>
+
+    <script id="fragment-shader2" type="x-shader/x-fragment">
+
+        precision mediump float;
+
+        uniform sampler2D shadowTexture;
+
+        varying vec4 fColor;
+
+        varying vec4 fPositionFromLight;
+        varying float normShadowVal;
+
+        varying vec2 fTexCoord;
+        uniform bool showTexture;
+        uniform sampler2D texture;
+
+        void main()
+        {
+        vec3 shadowCoord = (fPositionFromLight.xyz/fPositionFromLight.w)/2.0 + 0.5;
+
+        vec4 rgbaDepth = texture2D(shadowTexture, shadowCoord.xy);
+
+        float depth = rgbaDepth.r; // Retrieve the z-value from R
+
+        float visibility = (shadowCoord.z > depth + 0.005) ? 0.3 : 1.0;
+
+        if (showTexture) {
+        gl_FragColor = vec4(fColor.rgb *
+        texture2D(texture, fTexCoord).rgb *
+        visibility, fColor.a);
+        } else {
+        gl_FragColor = vec4(fColor.rgb * visibility, fColor.a);
+        }
+        }
+    </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="Objs/polyhedron.js"></script>
+    <script type="text/javascript" src="Objs/battledrone.js"></script>
+    <script type="text/javascript" src="Objs/duck.js"></script>
+    <script type="text/javascript" src="Objs/teapot.js"></script>
+    <script type="text/javascript" src="Objs/tree.js"></script>
+    <script type="text/javascript" src="LoadObjNoTexture.js"></script>
+
+    <script type="text/javascript" src="ShadowMap2.js"></script>
+</head>
+
+<body>
+
+    <table border="1" cellspacing="0" cellpadding="10">
+        <tr>
+            <td valign="top">
+
+                <canvas id="gl-canvas" width="512" height="512">
+                    Oops ... your browser doesn't support the HTML5 canvas element
+                </canvas>
+
+            </td>
+            <td valign="top" width="300">
+
+                <br /><br /><br /><br /><br /><br />
+                Select an Object:
+                <select id="selObject" size="1">
+                    <option value="0" selected="selected">Sphere</option>
+                    <option value="1">Polyhedron</option>
+                    <option value="2">Battledrone</option>
+                    <option value="3">Duck</option>
+                    <option value="4">Teapot</option>
+                    <option value="5">Tree</option>
+                </select>
+
+                <br />
+                <br />
+
+                Object's Vertical Position:
+                <br />-2.5
+                <input id="oYPos" type="range" min="-2.5" max="2.5" step="0.1" value="0" /> 2.5
+                <br />
+                <br />
+
+                Object's Horizontal Position:
+                <br />-5
+                <input id="oXPos" type="range" min="-5" max="5" step="0.1" value="0" /> 5
+
+                <br />
+                <br />
+
+                Soccer Ball's Perpendicular Position:
+                <br />0
+                <input id="sphereZPos" type="range" min="0" max="1.4" step="0.1" value="0" /> 1.4
+
+                <br />
+                <br />
+
+                <button id="rotateX">Rotate X</button>
+                <button id="rotateY">Rotate Y</button>
+                <button id="rotateZ">Rotate Z</button>
+                <br />
+                <button id="toggleRotation">Toggle Rotation</button>
+            </td>
+        </tr>
+    </table>
+    <img id="texture1" src="Images/soccerball.png" hidden />
+</body>
+</html>

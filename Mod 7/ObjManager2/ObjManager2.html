@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+        attribute vec4 vNormal;
+        attribute vec4 vColor;
+        varying vec4 fColor;
+
+        uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        uniform vec4 lightPosition;
+        uniform float shininess;
+        uniform bool hasColor;
+
+        attribute vec2 vTexCoord;
+        varying vec3 fTexCubeCoord;
+        varying vec2 fTexCoord;
+
+        void main()
+        {
+        vec3 pos = -(modelViewMatrix * vPosition).xyz;
+
+        //fixed light postion
+        vec3 light = lightPosition.xyz;
+        vec3 L = normalize( light - pos );
+
+        vec3 E = normalize( -pos );
+        vec3 H = normalize( L + E );
+
+        // Transform vertex normal into eye coordinates
+
+        vec3 N = normalize( (modelViewMatrix*vNormal).xyz);
+
+        // Compute terms in the illumination equation
+        vec4 ambient = ambientProduct;
+
+        float Kd = max( dot(L, N), 0.0 );
+        vec4  diffuse = Kd*diffuseProduct;
+
+        float Ks = pow( max(dot(N, H), 0.0), shininess );
+        vec4  specular = Ks * specularProduct;
+
+        if( dot(L, N) < 0.0 ) {
+        specular = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+
+        fTexCubeCoord = normalize(vPosition.xyz);
+        fTexCoord = vTexCoord;
+
+
+        if (hasColor) {
+        fColor = vColor * (ambient + diffuse + specular);
+        } else {
+        fColor = ambient + diffuse + specular;
+        }
+        fColor.a = 1.0;
+        }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+
+        precision mediump float;
+        varying vec4 fColor;
+
+        uniform bool showTexture;
+        varying vec2 fTexCoord;
+        uniform sampler2D texture;
+
+        void main()
+        {
+        if (showTexture) {
+        gl_FragColor = vec4(fColor.rgb * texture2D( texture, fTexCoord ).rgb, 1.0);
+        } else {
+        gl_FragColor = fColor;
+        }
+        }
+    </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="ObjManager2.js"></script>
+    <script type="text/javascript" src="Objs/Polyhedron.js"></script>
+    <script type="text/javascript" src="Objs/battledrone.js"></script>
+    <script type="text/javascript" src="Objs/duck.js"></script>
+    <script type="text/javascript" src="Objs/female02.js"></script>
+    <script type="text/javascript" src="Objs/male02.js"></script>
+    <script type="text/javascript" src="Objs/teapot.js"></script>
+    <script type="text/javascript" src="Objs/tree.js"></script>
+    <script type="text/javascript" src="Objs/annie.js"></script>
+    <script type="text/javascript" src="Objs/batman.js"></script>
+    <script type="text/javascript" src="Objs/clock.js"></script>
+    <script type="text/javascript" src="Objs/generic_female_01.js"></script>
+    <script type="text/javascript" src="Objs/generic_male_01.js"></script>
+    <script type="text/javascript" src="Objs/harleen_quinzel.js"></script>
+</head>
+
+<body>
+    <table border="1" cellspacing="5" cellpadding="10">
+        <tr>
+            <td valign="top">
+                <canvas id="gl-canvas" width="512" height="512">
+                    Oops ... your browser doesn't support the HTML5 canvas element
+                </canvas>
+            </td>
+            <td valign="top">
+
+                <br />
+                <br />
+                Select a File:
+                <input type="file" id="fileInput" accept=".obj" />
+                <pre id="fileDisplayArea"></pre>
+                <br />
+                <button id="rotateX">Rotate X</button>
+                <button id="rotateY">Rotate Y</button>
+                <button id="rotateZ">Rotate Z</button><br />
+                <button id="toggleRotation">Toggle Rotation</button>
+                <br />
+                <br />
+                Select an Object:
+                <select id="selObject" size="1">
+                    <option value="" selected="selected">None</option>
+                    <option value="1">Polyhedron</option>
+                    <option value="2">Battledrone</option>
+                    <option value="3">Duck</option>
+                    <option value="4">Female</option>
+                    <option value="5">Male</option>
+                    <option value="6">Teapot</option>
+                    <option value="7">Tree</option>
+                    <option value="8">Annie With Textures</option>
+                    <option value="9">Batman With Textures</option>
+                    <option value="10">Clock With Textures</option>
+                    <option value="11">Female With Textures</option>
+                    <option value="12">Male With Textures</option>
+                    <option value="13">Harleen Quinzel With Textures</option>
+                </select>
+                <br />
+                <br />
+                Select a Color:
+                <select id="selColor" size="1">
+                    <option value="0">Red</option>
+                    <option value="1" selected="selected">Yellow</option>
+                    <option value="2">Green</option>
+                    <option value="3">Blue</option>
+                    <option value="4">Magenta</option>
+                    <option value="5">Cyan</option>
+                    <option value="6">White</option>
+                </select>
+                <br />
+                Center it:
+                <input id="centerit" type="checkbox" checked="checked" />
+                <br />
+                Rotate Light:
+                <input id="rotatelight" type="checkbox" checked="checked" />
+                <br />
+                Show Mesh:
+                <input id="showmesh" type="checkbox" />
+
+                <span id="smoothshading">
+                    <br />
+                    Smooth Shading:
+                    <input id="smoothit" type="checkbox" checked="checked" />
+                </span>
+                <span id="adscontrol">
+                    <br />
+                    Remove ADS:
+                    <input id="removeads" type="checkbox" checked="checked" />
+                    <br />
+                    Remove Texture:
+                    <input id="removetexture" type="checkbox" />
+                </span>
+                <br />
+                <span id="texturepresent">
+                </span>
+                <span id="debugtxt">
+                </span>
+            </td>
+        </tr>
+    </table>
+
+    
+
+</body>
+</html>
