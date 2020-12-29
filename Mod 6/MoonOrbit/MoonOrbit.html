@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <script id="vertex-shader1" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+
+        uniform mat4 pmvMatrixFromLight;
+
+        void main()
+        {
+        gl_Position = pmvMatrixFromLight * vPosition;
+        }
+    </script>
+
+    <script id="fragment-shader1" type="x-shader/x-fragment">
+        precision mediump float;
+
+        void main() {
+        // Write the z-value in R
+        gl_FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);
+        }
+    </script>
+    <script id="vertex-shader2" type="x-shader/x-vertex">
+
+        attribute vec4 vPosition;
+        attribute vec3 vNormal;
+        attribute vec2 vTexCoord;
+
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+
+        uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+        uniform vec4 lightPosition;
+        uniform float shininess;
+
+        varying vec4 fColor;
+        varying vec2 fTexCoord;
+
+        uniform mat4 pmvMatrixFromLight;
+        varying vec4 fPositionFromLight;
+        varying float normShadowVal;
+
+        void main()
+        {
+        vec3 pos = -(modelViewMatrix * vPosition).xyz;
+
+        //fixed light postion
+        vec3 light = lightPosition.xyz;
+        vec3 L = normalize( light - pos );
+
+        vec3 E = normalize( -pos );
+        vec3 H = normalize( L + E );
+
+        vec4 NN = vec4(vNormal,0);
+
+        // Transform vertex normal into eye coordinates
+
+        vec3 N = normalize( (modelViewMatrix*NN).xyz);
+
+        // Compute terms in the illumination equation
+        vec4 ambient = ambientProduct;
+
+        float Kd = max( dot(L, N), 0.0 );
+        vec4  diffuse = Kd*diffuseProduct;
+
+        float Ks = pow( max(dot(N, H), 0.0), shininess );
+        vec4  specular = Ks * specularProduct;
+
+        if( dot(L, N) < 0.0 ) {
+        specular = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+        fColor = ambient + diffuse +specular;
+        fColor.a = 1.0;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+        fColor = ambient + diffuse +specular;
+        fColor.a = 1.0;
+        fTexCoord = vTexCoord;
+        fPositionFromLight = pmvMatrixFromLight * vPosition;
+        normShadowVal = specular.a;
+        }
+    </script>
+
+    <script id="fragment-shader2" type="x-shader/x-fragment">
+        precision mediump float;
+
+        uniform sampler2D shadowTexture;
+        uniform sampler2D texture;
+        uniform bool drawShadow;
+
+        varying vec4 fColor;
+        varying vec2 fTexCoord;
+        varying vec4 fPositionFromLight;
+        varying float normShadowVal;
+
+        void main()
+        {
+        vec3 shadowCoord = (fPositionFromLight.xyz/fPositionFromLight.w)/2.0 + 0.5;
+
+        vec4 rgbaDepth = texture2D(shadowTexture, shadowCoord.xy);
+
+        float depth = rgbaDepth.r; // Retrieve the z-value from R
+
+        float visibility = (drawShadow && shadowCoord.z > depth + 0.005 &&
+        normShadowVal < 0.01) ? 0.3 : 1.0;
+
+        gl_FragColor = vec4(fColor.rgb * visibility, fColor.a) * texture2D(texture, fTexCoord);
+        }
+    </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="MoonOrbit.js"></script>
+</head>
+
+<body>
+    <canvas id="gl-canvas" width="512" height="512">
+        Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+    <br />
+
+    
+    <img id="earthImage" src="images/earth.png" hidden />
+    <img id="moonImage" src="images/moon.png" hidden />
+
+</body>
+</html>
