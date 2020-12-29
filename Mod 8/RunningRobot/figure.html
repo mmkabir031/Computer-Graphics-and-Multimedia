@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script id="vertex-shader1" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+
+        uniform mat4 pmvMatrixFromLight;
+
+        void main()
+        {
+        gl_Position = pmvMatrixFromLight * vPosition;
+        }
+    </script>
+
+    <script id="fragment-shader1" type="x-shader/x-fragment">
+        precision mediump float;
+
+        void main() {
+        // Write the z-value in R
+        gl_FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
+        }
+    </script>
+
+    <script id="vertex-shader2" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+        attribute vec3 vNormal;
+        attribute vec2 vTexCoord;
+        varying vec2 fTexCoord;
+
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+
+        uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+        uniform vec4 lightPosition;
+        uniform float shininess;
+
+        uniform mat4 pmvMatrixFromLight;
+
+        varying vec4 fPositionFromLight;
+        varying vec3 fTexCubeCoord;
+        varying vec4 fColor2;
+        varying float normShadowVal;
+
+        void main()
+        {
+        vec3 pos = -(modelViewMatrix * vPosition).xyz;
+
+        //fixed light postion
+        vec3 light = lightPosition.xyz;
+
+        vec3 L = normalize( light - pos );
+        vec3 E = normalize( -pos );
+        vec3 H = normalize( L + E );
+
+        vec4 NN = vec4(vNormal,0);
+
+        // Transform vertex normal into eye coordinates
+
+        vec3 N = normalize( (modelViewMatrix*NN).xyz);
+
+        // Compute terms in the illumination equation
+        vec4 ambient = ambientProduct;
+
+        float Kd = max( dot(L, N), 0.0 );
+        vec4  diffuse = Kd*diffuseProduct;
+
+        float Ks = pow( max(dot(N, H), 0.0), shininess );
+        vec4  specular = Ks * specularProduct;
+
+        if( dot(L, N) < 0.0 ) {
+        specular = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+        fColor2 = ambient + diffuse + specular;
+        fColor2.a = 1.0;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+
+        fTexCubeCoord = normalize(vPosition.xyz);
+
+        fPositionFromLight = pmvMatrixFromLight * vPosition;
+        normShadowVal = specular.a;
+        fTexCoord = vTexCoord;
+        }
+    </script>
+
+    <script id="fragment-shader2" type="x-shader/x-fragment">
+        precision mediump float;
+
+        uniform bool showTexture;
+        varying vec2 fTexCoord;
+        uniform sampler2D texture;
+
+        uniform vec4 fColor;
+        uniform samplerCube texMap;
+        uniform bool showSky;
+        uniform sampler2D shadowTexture;
+        uniform int visibleState;
+
+        varying vec3 fTexCubeCoord;
+        varying vec4 fColor2;
+        varying vec4 fPositionFromLight;
+        varying float normShadowVal;
+
+        void main()
+        {
+
+        if (showSky) {
+        gl_FragColor = textureCube(texMap, fTexCubeCoord);
+        } else {
+        vec3 shadowCoord = (fPositionFromLight.xyz/fPositionFromLight.w)/2.0 + 0.5;
+        vec4 rgbaDepth = texture2D(shadowTexture, shadowCoord.xy);
+
+        float depth = rgbaDepth.r; // Retrieve the z-value from R
+        float visibility = (shadowCoord.z > depth + 0.005 && visibleState != 0 &&
+        (visibleState == 2 || normShadowVal < 1.0)) ? 0.7 : 1.0;
+
+        if (showTexture) {
+        gl_FragColor = vec4(fColor2.rgb * texture2D(texture, fTexCoord).rgb
+        * visibility, 1.0);
+        } else {
+        gl_FragColor = vec4(fColor2.rgb * fColor.rgb * visibility, 1.0);
+        }
+
+        }
+        }
+    </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="figure.js"></script>
+</head>
+<body>
+    <table border="0" cellspacing="5" cellpadding="10">
+        <tr>
+            <td valign="top">
+                <canvas id="gl-canvas" width="512" height="512">
+                    Oops ... your browser doesn't support the HTML5 canvas element
+                </canvas>
+            </td>
+
+        </tr>
+
+    </table>
+    <img id="cubefront" src="Images/skybox_front.png" hidden />
+    <img id="cubeback" src="Images/skybox_back.png" hidden />
+    <img id="cubetop" src="Images/skybox_top.png" hidden />
+    <img id="cubebottom" src="Images/skybox_bottom.png" hidden />
+    <img id="cubeleft" src="Images/skybox_left.png" hidden />
+    <img id="cuberight" src="Images/skybox_right.png" hidden />
+    <img id="texture1" src="Images/stripedtexture.png" hidden />
+    <img id="texture2" src="Images/wallpapertexture.png" hidden />
+    <img id="texture3" src="Images/fabrictexture.png" hidden />
+</body>
+</html>
