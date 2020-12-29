@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+        attribute vec4 vColor;
+        varying vec4 fColor;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        void main()
+        {
+        fColor = vColor;
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+        }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec4 fColor;
+        void
+        main()
+        {
+        gl_FragColor = fColor;
+        }
+    </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="LookAtCubePerspective.js"></script>
+</head>
+
+<body>
+    <table border="1" cellspacing="0" cellpadding="10">
+        <tr>
+            <td valign="top">
+                <canvas id="gl-canvas" width="512" height="512">
+                    Oops ... your browser doesn't support the HTML5 canvas element
+                </canvas>
+            </td>
+            <td valign="top" width="500">
+                <br />
+                <button id="perspective" style="background: #FFF">Perspective</button>
+                <button id="orthographic" style="background: #bebfba">Orthographic</button>
+
+                <br />
+                X Camera Position: <button id="xLeft" style="background: #FFF">Rotate Left</button>
+                <button id="xRight" style="background: #FFF">Rotate Right</button>
+                &nbsp;&nbsp;&nbsp;<span id="xAngTxt" style="background: #FFF"></span>
+                <br />
+                Y Camera Position: -2 <input id="yPos" type="range" min="-2.0" max="2.0" step="0.1" value="0.0" /> 2
+                &nbsp;&nbsp;&nbsp;<span id="yPosTxt" style="background: #FFF"></span>
+
+                <br />
+                Foxy: 0 <input id="fovy" type="range" min="0" max="180" step="1" value="140" /> 180
+                &nbsp;&nbsp;&nbsp;<span id="fovyTxt" style="background: #FFF"></span>
+                <br />
+                Near: 0 <input id="near" type="range" min="0" max="2.0" step="0.1" value="0.1" /> 2
+                &nbsp;&nbsp;&nbsp;<span id="nearTxt" style="background: #FFF"></span>
+                <br />
+                Far: 0 <input id="far" type="range" min="0" max="10" step="0.1" value="4" /> 10
+                &nbsp;&nbsp;&nbsp;<span id="farTxt" style="background: #FFF"></span>
+                <br />
+                Left/Right: 0.1 <input id="leftright" type="range" min="0.1" max="10" step="0.1" value="2" /> 10
+                &nbsp;&nbsp;&nbsp;<span id="leftrightTxt" style="background: #FFF"></span>
+                <br />
+                Top/Bottom: 0.1 <input id="topbottom" type="range" min="0.1" max="10" step="0.1" value="2" /> 10
+                &nbsp;&nbsp;&nbsp;<span id="topbottomTxt" style="background: #FFF"></span>
+                <br />
+                Ratio: -2 <input id="ratio" type="range" min="-2.0" max="2.0" step="0.1" value="1" /> 2
+                &nbsp;&nbsp;&nbsp;<span id="ratioTxt" style="background: #FFF"></span>
+
+
+
+                
+
+              
+
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
